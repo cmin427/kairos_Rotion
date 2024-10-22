@@ -1,79 +1,41 @@
 import numpy as np
 import cv2
 import cv2.aruco as aruco
-import time
-import board
-from digitalio import DigitalInOut
-from adafruit_vl53l0x import VL53L0X
-import serial
-import threading
-
-lock = threading.Lock()
-range_flag = "s"
-color_flag = "G"
-#================================global=and=threading================================   
-ser = serial.Serial(
-        port='/dev/ttyAMA0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
-        baudrate = 9600,
-        parity=serial.PARITY_NONE,
-        stopbits=serial.STOPBITS_ONE,
-        bytesize=serial.EIGHTBITS)
-
-i2c = board.I2C()  # uses board.SCL and board.SDA
-
-xshut = [
-    DigitalInOut(board.D17),
-    DigitalInOut(board.D27),
-]
-
-for power_pin in xshut:
-    power_pin.switch_to_output(value=False)
-
-    
-vl53 = []
-for i, power_pin in enumerate(xshut):
-    power_pin.value = True
-    print("2")
-    vl53.insert(i, VL53L0X(i2c))
-    print("3")
-    vl53[i].set_address(i + 0x30)
-
-print(vl53)
-#================================serial=setting=complete================================
 
 def color_detect(frame):       # qr영역으로 crop된 이미지
-    try:
-        src_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    src_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        # 색상 별 마스크 영역
-        mask_green = cv2.inRange(src_hsv, (60,75,80), (100,255,255))      # green
-        mask_green = np.repeat(mask_green[:,:,np.newaxis],3,-1)
-        mask_red = cv2.inRange(src_hsv, (150,80,80), (180,255,255))     # red
-        mask_red = np.repeat(mask_red[:,:,np.newaxis],3,-1)
-        mask_yellow = cv2.inRange(src_hsv, (10,100,80), (30,255,255))     # yellow
-        mask_yellow = np.repeat(mask_yellow[:,:,np.newaxis],3,-1)
+    # 색상 별 마스크 영역
+    mask_green = cv2.inRange(src_hsv, (60,75,80), (100,255,255))      # green
+    mask_green = np.repeat(mask_green[:,:,np.newaxis],3,-1)
+    mask_red = cv2.inRange(src_hsv, (150,80,80), (180,255,255))     # red
+    mask_red = np.repeat(mask_red[:,:,np.newaxis],3,-1)
+    mask_yellow = cv2.inRange(src_hsv, (10,100,80), (30,255,255))     # yellow
+    mask_yellow = np.repeat(mask_yellow[:,:,np.newaxis],3,-1)
 
-        # 마스크랑 겹치는 영역
-        dst1 = cv2.bitwise_and(src_hsv,mask_green)
-        dst2 = cv2.bitwise_and(src_hsv,mask_red)
-        dst3 = cv2.bitwise_and(src_hsv,mask_yellow)
+    # 마스크랑 겹치는 영역
+    dst1 = cv2.bitwise_and(src_hsv,mask_green)
+    dst2 = cv2.bitwise_and(src_hsv,mask_red)
+    dst3 = cv2.bitwise_and(src_hsv,mask_yellow)
 
-        green_sum = np.sum(dst1)
-        red_sum = np.sum(dst2)
-        yellow_sum = np.sum(dst3)
+    green_sum = np.sum(dst1)
+    red_sum = np.sum(dst2)
+    yellow_sum = np.sum(dst3)
 
-        # 제일 큰 값으로 반환
-        if max(green_sum, red_sum, yellow_sum) == green_sum:
-            return "G"
-        elif max(green_sum, red_sum, yellow_sum) == red_sum:
-            return "R"
-        else:
-            return "Y"
-    except:
-        return "N"
+    # 제일 큰 값으로 반환
+    if max(green_sum, red_sum, yellow_sum) == green_sum:
+        return 'GreenLight'
+    elif max(green_sum, red_sum, yellow_sum) == red_sum:
+        return 'RedLight'
+    else:
+        return 'YellowLight'
+
 
 # img = cv2.imread('traffic_signal_crop\RedLight\img_15.jpg')
 # print(color_detect(img))
+
+###
+
 
 class QR_detector: 
     def __init__(self):
@@ -138,7 +100,6 @@ class QR_detector:
                 sum=sum+distance
             avg=sum/len(ids)
         return avg
-    
     def crop_frame(self,frame):#이미지를 QR코드를 기준으로 crop함
         x_left, y_upper, x_right, y_lower = -1,-1,-1,-1
         #호정님 코드 이식
@@ -173,99 +134,56 @@ class QR_detector:
             # print(y_upper); print(y_lower); print(x_left); print(x_right)
             # cv2.rectangle(frame,(x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower)),(255,0,0))
         else:
-            return "no 2 QRq"
-            #return (x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower))
+            print("no 2 QRq")
+            return (x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower))
         return (x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower))
+    
+    
 
     def crop_img_with_QR(self,image,max_distance=0.25):
         self.detectQR(image)
         
         if(self.is_QR_detected()):#이미지 내에 QR이 존재할 경우 
-            #print('is_QR_detected')
+            print('a')
             distance=self.distance_to_QR(image)
             if max_distance<distance:
-                #print('max_distance<distance')
-                return "too short max distance"
+                print('c')
+                return None
             else:
                 x,y,w,h=self.crop_frame(image)
                 if x==-1:
                     return None
                 cropped_img=image[y:y+h,x:x+w]
-                #print('max_distance>distance')
-                #print(cropped_img.shape)
-                #print(type(cropped_img))
+                print('d')
+                print(cropped_img.shape)
+                print(type(cropped_img))
                 return cropped_img
         else:
-            #print('is_QR_no_detected')
-            return "QR no detected"
+            print('b')
+            return None
         
+        
+        
+detect=QR_detector()
+
 def roi_crop(frame):
-    detect=QR_detector()
     img2=detect.crop_img_with_QR(frame,50)
     # print(detect.ids)
-    #if not detect.is_QR_detected():
-        #print("no QR")
-        #return    
+    if not detect.is_QR_detected():
+        print("no QR")
+        return
+    
     return img2
-#================================cv2=functions=ready================================
 
-def update_range(vl53):
-    global range_flag
-    while True:
-        with lock:
-            range_flag = "g"
-            for index, sensor in enumerate(vl53):
-                if sensor.range < 100:
-                    range_flag = "s"
-                    break
-    
-def update_color():
-    global color_flag
-    cap = cv2.VideoCapture(0)
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        img = roi_crop(frame)
-        with lock:
-            color_flag = color_detect(img)
-        cv2.imshow('frame', frame)
-        if cv2.waitKey(1) == ord('q'):
-            break
-    cap.release()
-    cv2.destroyAllWindows()
-    
-def update_to_AGV():
-    global color_flag, range_flag
-    while True:
-        data = color_flag + range_flag
-        data = bytes(data,'utf-8')
-        print(color_flag,"|",range_flag)
-        ser.write(data)
-        time.sleep(1)
-    ser.close()
-        #data = bytes(data,'utf-8')
-        #print(data.decode('utf-8'),data,counter)
-        
-#================================multi_threading_funcs================================
-  
-if __name__ == "__main__":
-    t1 = threading.Thread(target=update_range, args=(vl53))
-    t2 = threading.Thread(target=update_color)
-    t3 = threading.Thread(target=update_to_AGV)
-    threads = [t1,t2,t3]
-    
-    t1.start()
-    t2.start()
-    t3.start()
-    
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        print("Main thread received KeyboardInterrupt. Stopping threads...")
-        for t in threads:
-            t.join()
-        
-    
-       
+###
+cap = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = cap.read()
+
+    if not ret:
+        print("Can't receive frame (stream end?). Exiting ...")
+        break
+
+    img = roi_crop(frame)
+    print(color_detect(img))
