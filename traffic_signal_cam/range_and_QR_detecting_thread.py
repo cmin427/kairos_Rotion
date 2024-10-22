@@ -8,6 +8,10 @@ from adafruit_vl53l0x import VL53L0X
 import serial
 import threading
 
+lock = threading.Lock()
+range_flag = "s"
+color_flag = "G"
+#================================global=and=threading================================   
 ser = serial.Serial(
         port='/dev/ttyAMA0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
         baudrate = 9600,
@@ -60,11 +64,11 @@ def color_detect(frame):       # qr영역으로 crop된 이미지
 
         # 제일 큰 값으로 반환
         if max(green_sum, red_sum, yellow_sum) == green_sum:
-            return 'G'
+            return "G"
         elif max(green_sum, red_sum, yellow_sum) == red_sum:
-            return 'R'
+            return "R"
         else:
-            return 'Y'
+            return "Y"
     except:
         return "N"
 
@@ -169,7 +173,7 @@ class QR_detector:
             # print(y_upper); print(y_lower); print(x_left); print(x_right)
             # cv2.rectangle(frame,(x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower)),(255,0,0))
         else:
-            print("no 2 QRq")
+            return "no 2 QRq"
             #return (x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower))
         return (x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower))
 
@@ -180,24 +184,23 @@ class QR_detector:
             #print('is_QR_detected')
             distance=self.distance_to_QR(image)
             if max_distance<distance:
-                print('max_distance<distance')
-                return None
+                #print('max_distance<distance')
+                return "too short max distance"
             else:
                 x,y,w,h=self.crop_frame(image)
                 if x==-1:
                     return None
                 cropped_img=image[y:y+h,x:x+w]
-                print('max_distance>distance')
-                print(cropped_img.shape)
-                print(type(cropped_img))
+                #print('max_distance>distance')
+                #print(cropped_img.shape)
+                #print(type(cropped_img))
                 return cropped_img
         else:
             #print('is_QR_no_detected')
-            return None
+            return "QR no detected"
         
-detect=QR_detector()
-
 def roi_crop(frame):
+    detect=QR_detector()
     img2=detect.crop_img_with_QR(frame,50)
     # print(detect.ids)
     #if not detect.is_QR_detected():
@@ -207,16 +210,14 @@ def roi_crop(frame):
 #================================cv2=functions=ready================================
 
 def update_range(vl53):
-    global range_flag, color_range
+    global range_flag
     while True:
         with lock:
             range_flag = "g"
-        for index, sensor in enumerate(vl53):
-            if sensor.range < 100:
-                with lock:
+            for index, sensor in enumerate(vl53):
+                if sensor.range < 100:
                     range_flag = "s"
-                break
-        time.sleep(1)
+                    break
     
 def update_color():
     global color_flag
@@ -241,15 +242,13 @@ def update_to_AGV():
         data = bytes(data,'utf-8')
         print(color_flag,"|",range_flag)
         ser.write(data)
+        time.sleep(1)
     ser.close()
         #data = bytes(data,'utf-8')
         #print(data.decode('utf-8'),data,counter)
         
 #================================multi_threading_funcs================================
-range_flag = "s"
-color_flag = "N"
-lock = threading.Lock()
-#================================global=and=threading================================     
+  
 if __name__ == "__main__":
     t1 = threading.Thread(target=update_range, args=(vl53))
     t2 = threading.Thread(target=update_color)
