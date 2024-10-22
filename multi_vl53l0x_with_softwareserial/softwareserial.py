@@ -55,30 +55,36 @@ class softwareSerial():
                 (byte_count, data) = self.pigpio.bb_serial_read(self.rxd)
 
                 if data:
-                    print("type:",type(data))
-                    print("data:",data,data[0])
+                    # print("type:",type(data))
+                    # print("data:",data,",",data[0])
+                    # print("==================================================")
                     try:
                         #pass
-                        final_string += data.decode()
+                        final_string += data.decode('utf-8')
                         print("try")
+                        return final_string
                     except UnicodeDecodeError:
                         final_string += "".join([chr(b) for b in data])
-                        print("except")
+                        # print("except")
 
-                    final_string = final_string + data
+                    #final_string = final_string + data
 
                     if final_string.find(self.new) != -1:
+                        print("3")
                         while int(byte_count) > 0:
                             (byte_count, data) = self.pigpio.bb_serial_read(self.rxd)
-
+                            
                             try:
                                 data = data.decode("utf-8")
+                                print("4")
                             except AttributeError:
+                                print("5")
                                 pass
 
                             final_string = final_string + data
 
                             if final_string.find(self.eol) != -1:
+                                print("6")
                                 final_string = final_string.strip(self.new)
                                 final_string = final_string.strip(self.eol)
                                 return final_string
@@ -86,6 +92,7 @@ class softwareSerial():
             return None
         except Exception as e:
             self.logger.error(f"Failed to get data, error: {e}")
+        return final_string
 
 if __name__ == "__main__":
     serial = softwareSerial(17, 27, 9600)
