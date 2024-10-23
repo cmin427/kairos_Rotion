@@ -3,7 +3,7 @@ import logging
 import time
 
 class softwareSerial():
-    def __init__(self, txd_pin, rxd_pin, baudrate, timeout=15, new="/n", eol="/n"):
+    def __init__(self, txd_pin, rxd_pin, baudrate, timeout=15, new="", eol=""):
         logging.basicConfig(level=logging.DEBUG)
         self.logger = logging.getLogger(__name__)
 
@@ -53,31 +53,34 @@ class softwareSerial():
             start = time.perf_counter()
             while round((time.perf_counter() - start), 2) < self.timeout:
                 (byte_count, data) = self.pigpio.bb_serial_read(self.rxd)
-
                 if data:
                     try:
                         #pass
                         data = data.decode("utf-8") # convert to str.
+                        #print("1: ",data, type(data))
                     except AttributeError:
                         pass
 
                     final_string = final_string + data
-
+                    #print("2: ",final_string,type(final_string))
                     if final_string.find(self.new) != -1:
                         while int(byte_count) > 0:
                             (byte_count, data) = self.pigpio.bb_serial_read(self.rxd)
 
                             try:
                                 data = data.decode("utf-8")
+                                #print("3: ",data)
                             except AttributeError:
                                 pass
 
                             final_string = final_string + data
+                            #print("4: ",final_string)
 
                             if final_string.find(self.eol) != -1:
                                 final_string = final_string.strip(self.new)
                                 final_string = final_string.strip(self.eol)
-                                return final_string
+                                #print("5: ",final_string)
+                                return final_string          
             self.logger.warning("Timeout reached!")
             return None
         except Exception as e:
@@ -88,7 +91,7 @@ if __name__ == "__main__":
 
     while True:
         read = serial.read()
-        
+        print("6: ",read,type(read))
         if read != None:
             if read.find("ping") != -1:
                 serial.write("pong")

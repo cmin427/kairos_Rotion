@@ -9,8 +9,8 @@ import serial
 import threading
 
 lock = threading.Lock()
-range_flag = "g"
-color_flag = "G"
+range_flag = ""
+color_flag = ""
 #================================global=and=threading================================   
 ser = serial.Serial(
         port='/dev/ttyAMA0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
@@ -184,14 +184,14 @@ class QR_detector:
             #print('is_QR_detected')
             distance=self.distance_to_QR(image)
             if max_distance<distance:
-                print('max_distance<distance')
+                #print('max_distance<distance')
                 return None
             else:
                 x,y,w,h=self.crop_frame(image)
                 if x==-1:
                     return None
                 cropped_img=image[y:y+h,x:x+w]
-                print('max_distance>distance')
+                #print('max_distance>distance')
                 #print(cropped_img.shape)
                 #print(type(cropped_img))
                 return cropped_img
@@ -213,11 +213,11 @@ def update_range(vl53):
     global range_flag
     while True:
         with lock:
-            range_flag = "g"
             for index, sensor in enumerate(vl53):
                 if sensor.range < 100:
-                    range_flag = "s"
-                    break
+                    range_flag = " s"
+                else:
+                    range_flag = " g"
     
 def update_color():
     global color_flag
@@ -228,8 +228,8 @@ def update_color():
             break
         img = roi_crop(frame)
         with lock:
-            color_flag = color_detect(img)
-        cv2.imshow('frame', frame)
+            color_flag = color_detect(img)+" "
+        #cv2.imshow('frame', frame)
         if cv2.waitKey(1) == ord('q'):
             break
     cap.release()
@@ -238,19 +238,30 @@ def update_color():
 def update_to_AGV():
     global color_flag, range_flag
     while True:
-        data = color_flag + range_flag
-        data = bytes(data,'utf-8')
-        print(color_flag,"|",range_flag)
-        ser.write(data)
-        time.sleep(1)
-    ser.close()
+        data = range_flag+" "+color_flag
+        data_bytes = data.encode('utf-8')
+        
+        ser.reset_input_buffer()
+        ser.reset_output_buffer()
+        
+        try:
+            if len(data) > 3:
+                ser.write(data_bytes)
+                print(f"Sent: {data_bytes}")
+            else:
+                pass
+        except serial.SerialException as e:
+            print(f"Serial write error: {e}")
+            
+        time.sleep(1.5)
         #data = bytes(data,'utf-8')
         #print(data.decode('utf-8'),data,counter)
+    ser.close()
         
 #================================multi_threading_funcs================================
   
 if __name__ == "__main__":
-    t1 = threading.Thread(target=update_range, args=vl53)
+    t1 = threading.Thread(target=update_range, args=(vl53, ))
     t2 = threading.Thread(target=update_color)
     t3 = threading.Thread(target=update_to_AGV)
     threads = [t1,t2,t3]
