@@ -1,19 +1,22 @@
 '''
 수정된 사항
-1. Uploading_Arm과 Building_Arm이 서로 연결
+1. mc.send_coords()를 mc.sync_send_coords()로 변경
+2. mc.send_angles()를 mc.sync_send_angles()로 변경
+3. move_sort_location(mc, location_index)으로 A지점에 쌓는 블럭 3개를 단순화 했음
+'''
+
+'''
+추가해야 될 사항
+1. 블럭을 쌓는 위치 파악
+2. B지점, C지점에 대한 위치값과 블럭 쌓는 위치 파악
 '''
 import cv2
 import numpy as np
 from pymycobot import MyCobot320
 import time
 
-# MyCobot 설정
-mc1 = MyCobot320('COM3', 115200)
-mc2 = MyCobot320('COM7',115200)
-
-'''
-Building Arm 함수
-'''
+# MyCobot1(sorting bot) 설정
+mc = MyCobot320('COM3', 115200)
 
 # 그리퍼를 open할 때, 얼마나 벌릴지에 대해 결정하는 함수
 def custom_gripper(mc, range, speed):
@@ -245,29 +248,34 @@ def color_detect(frame):
         # 바이너리로 반환
     return frame,color
 
-'''
-Uploading Arm 함수
-'''
-def move_arm(pos):
-    mc.send_angles(pos, 30)
-    time.sleep(3)
+#================== uploading bot 설정(cobot2)===================
+mc_upload = MyCobot320('COM7',115200)
 
-def move_gripper(flag,w=100):
-    if flag == "OPEN":
-        mc.set_eletric_gripper(1)
-        mc.set_gripper_value(w,20)
-    elif flag == "CLOSE":
-        mc.set_eletric_gripper(0)
-        mc.set_gripper_value(0,20)
-    else:
-        print("invalid")
-    time.sleep(3)
-
+# uploading bot 원점, 집는점, 놓는점 좌표.
 cobot2_pos_pick1 = [-130,-5,-5,0,90,30]
 cobot2_pos_pick2 = [-130,-70,-10,-5,90,50]
 cobot2_pos_origin = [0,0,0,0,0,0]
 cobot2_pos_drop1 = [90,0,0,0,-90,0]
 cobot2_pos_drop2 = [90,20,28,40,-90,0]
+
+# uploading bot 팔,그리퍼 제어함수.
+def move_arm(pos):
+    mc_upload.send_angles(pos, 30)
+    time.sleep(4)
+
+def move_gripper(flag,w=100):
+    if flag == "OPEN":
+        mc_upload.set_eletric_gripper(1)
+        mc_upload.set_gripper_value(w,20)
+    elif flag == "CLOSE":
+        mc_upload.set_eletric_gripper(0)
+        mc_upload.set_gripper_value(0,20)
+    else:
+        print("cobot2 gripper : invalid")
+    time.sleep(4)
+
+
+
 
 # 카메라 및 초기 설정
 cap = cv2.VideoCapture(1)
@@ -275,8 +283,12 @@ cap = cv2.VideoCapture(1)
 # gripper 설정
 open_gripper(mc)
 calibration_gripper(mc) # 코드를 처음 실행할때만 넣으면 됨
+calibration_gripper(mc_upload) # 코봇2 그리퍼도 초기화.
 close_gripper(mc)
 
+#코봇2 원점.
+move_arm(cobot2_pos_origin)
+move_gripper("OPEN")
 
 # 이동 완료 플래그
 completed = False
@@ -350,6 +362,23 @@ while not completed:
     
     # 뒤로 후진
     move_block_rear(mc)
+
+    #코봇2(업로딩봇) 제어시작
+    move_arm(cobot2_pos_pick1)
+    move_arm(cobot2_pos_pick2)
+    move_gripper("CLOSE")
+    #집기 완료
+    move_arm(cobot2_pos_pick1)
+    move_arm(cobot2_pos_origin)
+    #고개 들기 완료
+    move_arm(cobot2_pos_drop1)
+    move_arm(cobot2_pos_drop2)
+    move_gripper("OPEN",80)
+    #놓기 완료
+    move_arm(cobot2_pos_drop1)
+    move_arm(cobot2_pos_origin)
+    
+
     
     # 쌓는 위치의 중간 위치로 이동
     move_center_sort(mc)
