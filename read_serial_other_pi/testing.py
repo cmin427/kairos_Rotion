@@ -10,6 +10,8 @@ num = 1
 while True:
     msg = swser.read()
     #swser.read()
+
+
     if msg:
         buffer += msg
         counter += 1

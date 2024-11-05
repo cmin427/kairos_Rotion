@@ -36,9 +36,9 @@ for i, power_pin in enumerate(xshut):
     print("2")
     vl53.insert(i, VL53L0X(i2c))
     print("3")
-    vl53[i].set_address(i + 0x30)
-
-print(vl53)
+    vl53[i].set_address(i + 0x29)
+print("4")
+#print(vl53)
 #================================serial=setting=complete================================
 
 def color_detect(frame):       # qr영역으로 crop된 이미지
@@ -196,7 +196,7 @@ class QR_detector:
                 #print(type(cropped_img))
                 return cropped_img
         else:
-            print('is_QR_no_detected')
+            #print('is_QR_no_detected')
             return 
 
 detect=QR_detector()        
@@ -204,7 +204,7 @@ def roi_crop(frame):
     img2=detect.crop_img_with_QR(frame,50)
     # print(detect.ids)
     if not detect.is_QR_detected():
-        print("no QR")
+        #print("no QR")
         return    
     return img2
 #================================cv2=functions=ready================================
@@ -214,10 +214,16 @@ def update_range(vl53):
     while True:
         with lock:
             for index, sensor in enumerate(vl53):
-                if sensor.range < 100:
-                    range_flag = " s"
-                else:
-                    range_flag = " g"
+                try:
+                    if sensor.range < 100:
+                        range_flag = " s"
+                        break
+                    else:
+                        range_flag = " g"
+                except:
+                    #print("range update failed")
+                    pass
+            #time.sleep(1)
     
 def update_color():
     global color_flag
@@ -229,7 +235,7 @@ def update_color():
         img = roi_crop(frame)
         with lock:
             color_flag = color_detect(img)+" "
-        #cv2.imshow('frame', frame)
+        cv2.imshow('frame', frame)
         if cv2.waitKey(1) == ord('q'):
             break
     cap.release()
@@ -253,7 +259,7 @@ def update_to_AGV():
         except serial.SerialException as e:
             print(f"Serial write error: {e}")
             
-        time.sleep(1.5)
+        time.sleep(1)
         #data = bytes(data,'utf-8')
         #print(data.decode('utf-8'),data,counter)
     ser.close()
@@ -277,6 +283,4 @@ if __name__ == "__main__":
         print("Main thread received KeyboardInterrupt. Stopping threads...")
         for t in threads:
             t.join()
-        
-    
        

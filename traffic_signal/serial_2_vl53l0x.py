@@ -51,7 +51,7 @@ for i, power_pin in enumerate(xshut):
     # no need to change the address of the last VL53L0X sensor
    # if i < len(xshut) - 1:
         # default address is 0x29. Change that to something else
-    vl53[i].set_address(i + 0x30)  # address assigned should NOT be already in use
+    vl53[i].set_address(i + 0x29)  # address assigned should NOT be already in use
    # print(i,power_pin)
     print("8")
 # there is a helpful list of pre-designated I2C addresses for various I2C devices at
@@ -73,15 +73,19 @@ def detect_range(vl53):
         data = "ff"
         #data = b'ff'
         for index, sensor in enumerate(vl53):
-            if sensor.range < 100:
-                data = "ss"
-                #data = b'ff'
-                break
+            try:
+                if sensor.range < 100:
+                    data = "ss"
+                    #data = b'ff'
+                    break
         #data = data.encode('utf-8')
         #data = bytes(data,'utf-8')
+                
+        #print(counter,": ",data.decode('utf-8'),data)
+            except:
+                pass
         ser.write(data.encode('utf-8'))
         print(counter,": ",data)
-        #print(counter,": ",data.decode('utf-8'),data)
         counter += 1
         time.sleep(1)
     ser.close()
