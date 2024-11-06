@@ -10,16 +10,16 @@ num = 1
 while True:
     msg = swser.read()
     #swser.read()
+    print("msg:",msg)
 
-
-    if msg:
-        buffer += msg
-        counter += 1
+    # if msg:
+    #     buffer += msg
+    #     counter += 1
     
-    if counter == 2:
-        print(num , ". received:",buffer)
-        num += 1
-        buffer =""
-        counter =0
-    # time.sleep(1)
+    # if counter == 2:
+    #     print(num , ". received:",buffer)
+    #     num += 1
+    #     buffer =""
+    #     counter =0
+    # # time.sleep(1)
     
