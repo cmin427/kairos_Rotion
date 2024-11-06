@@ -11,6 +11,7 @@ import threading
 lock = threading.Lock()
 range_flag = ""
 color_flag = ""
+frame=None
 #================================global=and=threading================================   
 ser = serial.Serial(
         port='/dev/ttyAMA0', #Replace ttyS0 with ttyAM0 for Pi1,Pi2,Pi0
@@ -41,36 +42,35 @@ print("4")
 #print(vl53)
 #================================serial=setting=complete================================
 
-def color_detect(frame):       # qr영역으로 crop된 이미지
-    try:
-        src_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+def color_detect(frame):   # find which color has most pixel, must be used for only cropped frame 
+    
+    src_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        # 색상 별 마스크 영역
-        mask_green = cv2.inRange(src_hsv, (60,75,80), (100,255,255))      # green
-        mask_green = np.repeat(mask_green[:,:,np.newaxis],3,-1)
-        mask_red = cv2.inRange(src_hsv, (150,80,80), (180,255,255))     # red
-        mask_red = np.repeat(mask_red[:,:,np.newaxis],3,-1)
-        mask_yellow = cv2.inRange(src_hsv, (10,100,80), (30,255,255))     # yellow
-        mask_yellow = np.repeat(mask_yellow[:,:,np.newaxis],3,-1)
+    # 색상 별 마스크 영역
+    mask_green = cv2.inRange(src_hsv, (60,75,80), (100,255,255))      # green
+    mask_green = np.repeat(mask_green[:,:,np.newaxis],3,-1)
+    mask_red = cv2.inRange(src_hsv, (150,80,80), (180,255,255))     # red
+    mask_red = np.repeat(mask_red[:,:,np.newaxis],3,-1)
+    mask_yellow = cv2.inRange(src_hsv, (10,100,80), (30,255,255))     # yellow
+    mask_yellow = np.repeat(mask_yellow[:,:,np.newaxis],3,-1)
 
-        # 마스크랑 겹치는 영역
-        dst1 = cv2.bitwise_and(src_hsv,mask_green)
-        dst2 = cv2.bitwise_and(src_hsv,mask_red)
-        dst3 = cv2.bitwise_and(src_hsv,mask_yellow)
+    # 마스크랑 겹치는 영역
+    dst1 = cv2.bitwise_and(src_hsv,mask_green)
+    dst2 = cv2.bitwise_and(src_hsv,mask_red)
+    dst3 = cv2.bitwise_and(src_hsv,mask_yellow)
 
-        green_sum = np.sum(dst1)
-        red_sum = np.sum(dst2)
-        yellow_sum = np.sum(dst3)
+    green_sum = np.sum(dst1)
+    red_sum = np.sum(dst2)
+    yellow_sum = np.sum(dst3)
 
-        # 제일 큰 값으로 반환
-        if max(green_sum, red_sum, yellow_sum) == green_sum:
-            return "G"
-        elif max(green_sum, red_sum, yellow_sum) == red_sum:
-            return "R"
-        else:
-            return "Y"
-    except:
-        return "N"
+    # 제일 큰 값으로 반환
+    if max(green_sum, red_sum, yellow_sum) == green_sum:
+        return "cG"
+    elif max(green_sum, red_sum, yellow_sum) == red_sum:
+        return "cR"
+    else:
+        return "cY"
+
 
 # img = cv2.imread('traffic_signal_crop\RedLight\img_15.jpg')
 # print(color_detect(img))
@@ -90,7 +90,7 @@ class QR_detector:
         if self.ids is None:
             return False
         else:
-            return True
+            return True 
         
     def detectQR(self,frame): #이미지나 프레임을 받아서 qr이 존재하면 관련 변수를 업데이트하고, 없으면 id 등
         #이미지를 그레이 스케일로 변경
@@ -173,79 +173,119 @@ class QR_detector:
             # print(y_upper); print(y_lower); print(x_left); print(x_right)
             # cv2.rectangle(frame,(x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower)),(255,0,0))
         else:
-            print("no 2 QRq")
-            return (x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower))
+            # print("not enough QR")
+            return (-1,-1,-1,-1)
         return (x_left, y_upper, abs(x_left-x_right), abs(y_upper-y_lower))
 
     def crop_img_with_QR(self,image,max_distance=0.25):
         self.detectQR(image)
-        
-        if(self.is_QR_detected()):#이미지 내에 QR이 존재할 경우 
+     
+        if(self.is_QR_detected()):#이미지 내에 QR이 존재할 경우
+         
             #print('is_QR_detected')
             distance=self.distance_to_QR(image)
-            if max_distance<distance:
+            if max_distance<distance: #case when qr is too far
+       
                 #print('max_distance<distance')
                 return None
             else:
                 x,y,w,h=self.crop_frame(image)
-                if x==-1:
+                if x==-1: # case when image has only one qr
+              
                     return None
                 cropped_img=image[y:y+h,x:x+w]
+  
                 #print('max_distance>distance')
                 #print(cropped_img.shape)
                 #print(type(cropped_img))
                 return cropped_img
-        else:
+        else: # case when image has no qr 
             #print('is_QR_no_detected')
-            return 
+         
+            return None
 
 detect=QR_detector()        
 def roi_crop(frame):
     img2=detect.crop_img_with_QR(frame,50)
     # print(detect.ids)
-    if not detect.is_QR_detected():
-        #print("no QR")
-        return    
+  
     return img2
 #================================cv2=functions=ready================================
 
 def update_range(vl53):
     global range_flag
     while True:
-        with lock:
-            for index, sensor in enumerate(vl53):
-                try:
-                    if sensor.range < 100:
-                        range_flag = " s"
-                        break
-                    else:
-                        range_flag = " g"
-                except:
-                    #print("range update failed")
-                    pass
-            #time.sleep(1)
+        print("distance thread")
+  
+        for index, sensor in enumerate(vl53):
+            try:
+                if sensor.range < 100:
+                    range_flag = " ds"
+                    break
+                else:
+                    range_flag = " dg"
+            except:
+                #print("range update failed")
+                pass
+        #time.sleep(1)
     
 def update_color():
     global color_flag
-    cap = cv2.VideoCapture(0)
+    global frame
+    
+    cnt=0
+
     while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        img = roi_crop(frame)
-        with lock:
-            color_flag = color_detect(img)+" "
-        cv2.imshow('frame', frame)
+        current_frame=frame
+        if current_frame is None:
+            print("camera thread not yet started")
+            time.sleep(0.5)
+            continue
+        
+        cv2.imwrite(f'./frame/frame{cnt}.jpg', current_frame)
+        print(f"frame{cnt} saved")
+        cnt=cnt+1
+        
+        
+        img = roi_crop(current_frame)
+
+        if img is None:
+            print("color_flag updated")
+            color_flag="cN "
+            continue 
+
+        
+
+        color_flag = color_detect(img)+" "
+   
+       
         if cv2.waitKey(1) == ord('q'):
             break
     cap.release()
     cv2.destroyAllWindows()
     
-def update_to_AGV():
-    global color_flag, range_flag
+def camera_capture_and_update_frame():
+    global frame
+    cap = cv2.VideoCapture(0)
     while True:
-        data = range_flag+" "+color_flag
+        ret, frame = cap.read()
+        if not ret:
+            print('camera not reading frame')
+        if cv2.waitKey(1) == ord('q'):
+            break
+    cap.release()
+
+    
+
+    
+def update_to_AGV():
+   
+    while True:
+        print("serial thread")
+        print("range_flag ",range_flag)
+        data = range_flag+color_flag
         data_bytes = data.encode('utf-8')
+        print(f"I have data to send : {data_bytes}")
         
         ser.reset_input_buffer()
         ser.reset_output_buffer()
@@ -253,7 +293,7 @@ def update_to_AGV():
         try:
             if len(data) > 3:
                 ser.write(data_bytes)
-                print(f"Sent: {data_bytes}")
+                print(f"I have just Sent: {data_bytes}")
             else:
                 pass
         except serial.SerialException as e:
@@ -270,8 +310,10 @@ if __name__ == "__main__":
     t1 = threading.Thread(target=update_range, args=(vl53, ))
     t2 = threading.Thread(target=update_color)
     t3 = threading.Thread(target=update_to_AGV)
-    threads = [t1,t2,t3]
+    t4 = threading.Thread(target=camera_capture_and_update_frame)
+    threads = [t1,t2,t3,t4]
     
+    t4.start()
     t1.start()
     t2.start()
     t3.start()
