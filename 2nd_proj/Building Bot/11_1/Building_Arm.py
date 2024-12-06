@@ -49,7 +49,7 @@ def move_block(mc):
 # 블럭의 중심좌표값을 통해 로봇팔이 움직일 위치 계산하는 함수
 def move_center_block(mc,box_center):
     robot_x, robot_y = get_robot_position(box_center)
-    mc.sync_send_coords([robot_x, robot_y+5, 250, -170, 2.29, 84.92], 30, 0)
+    mc.sync_send_coords([robot_x, robot_y+3, 250, -170, 2.29, 84.92], 30, 0)
     print(f"로봇팔 위치로 이동: ({robot_x}, {robot_y})")
     time.sleep(2)
 
@@ -92,61 +92,61 @@ def move_center_green(mc):
     print('초록색 중앙')
     time.sleep(1)
 
-# A 블럭 3개를 정리하는 위치를 저장한 함수
-def move_sort_location_A(mc, block_count):
+# 초록색 블럭 3개를 정리하는 위치를 저장한 함수
+def move_sort_location_green(mc, block_count):
     # 각 위치에 맞는 각도로 이동 설정
     if block_count == 0:
         # 첫 번째 지점
         mc.sync_send_coords([297.3, (-145.5), 185, (-170), 0.71, (-159.42)], 30, 0)
-        print('A 지점의 첫번째 블록 쌓는중')
+        print('첫번째 초록색 블록 쌓는중')
         time.sleep(2)
     elif block_count == 1:
         # 두 번째 지점
         mc.sync_send_coords([297.3, (-145.5), 205.2, (-170), 0.71, (-159.42)], 30, 0)
-        print('A 지점의 두번째 블록 쌓는중')
+        print('두번째 초록색 블록 쌓는중')
         time.sleep(2)
     elif block_count == 2:
         # 세 번째 지점
         mc.sync_send_coords([297.3, (-145.5), 234.2, (-170), 0.71, (-159.42)], 30, 0)
-        print('A 지점의 세번째 블록 쌓는중')
+        print('세번째 초록색 블록 쌓는중')
         time.sleep(2)
         
-# B 블럭 3개를 정리하는 위치를 저장한 함수
-def move_sort_location_B(mc, block_count):
+# 빨간색 블럭 3개를 정리하는 위치를 저장한 함수
+def move_sort_location_red(mc, block_count):
     # 각 위치에 맞는 각도로 이동 설정
     if block_count == 0:
         # 첫 번째 지점
         mc.sync_send_coords([204.8, (-274.8), 185, (-170), 0.71, (-159.42)], 30, 0)
-        print('B 지점의 첫번째 블록 쌓는중')
+        print('첫번째 빨간색 블록 쌓는중')
         time.sleep(2)
     elif block_count == 1:
         # 두 번째 지점
         mc.sync_send_coords([204.8, (-274.8), 206.2, (-170), 0.71, (-159.42)], 30, 0)
-        print('B 지점의 두번째 블록 쌓는중')
+        print('두번째 빨간색 블록 쌓는중')
         time.sleep(2)
     elif block_count == 2:
         # 세 번째 지점
         mc.sync_send_coords([204.8, (-274.8), 234.2, (-170), 0.71, (-159.42)], 30, 0)
-        print('B 지점의 두번째 블록 쌓는중')
+        print('세번째 빨간색 블록 쌓는중')
         time.sleep(2)
         
-# C 블럭 3개를 정리하는 위치를 저장한 함수
-def move_sort_location_C(mc, block_count):
+# 보라색 블럭 3개를 정리하는 위치를 저장한 함수
+def move_sort_location_purple(mc, block_count):
     # 각 위치에 맞는 각도로 이동 설정
     if block_count == 0:
         # 첫 번째 지점
         mc.sync_send_coords([275.7, (-210.9), 185, (-170), 0.71, (-159.42)], 30, 0)
-        print('C 지점의 첫번째 블록 쌓는중')
+        print('첫번째 보라색 블록 쌓는중')
         time.sleep(2)
     elif block_count == 1:
         # 두 번째 지점
         mc.sync_send_coords([275.7, (-210.9), 206.2, (-170), 0.71, (-159.42)], 30, 0)
-        print('C 지점의 두번째 블록 쌓는중')
+        print('두번째 보라색 블록 쌓는중')
         time.sleep(2)
     elif block_count == 2:
         # 세 번째 지점
         mc.sync_send_coords([275.7, (-210.9), 234.2, (-170), 0.71, (-159.42)], 30, 0)
-        print('C 지점의 두번째 블록 쌓는중')
+        print('세번째 보라색 블록 쌓는중')
         time.sleep(2)
 
 def move_trash(mc):
@@ -156,16 +156,10 @@ def move_trash(mc):
 
 # 보간 계수 계산 함수 (앞서 계산된 중심값과 로봇팔 좌표값으로부터)
 center_points = np.array([
-    # [268, 211], [296,315], [310, 268], [267, 207], [221, 238], 
-    # [203, 229], [314, 335], [296, 232], [256, 285], [278, 188],
-    # [395, 307], [150, 321]
     [254, 266], [280, 226], [263, 235], [249, 199], [297, 253], 
     [293, 280], [251, 240], [236, 203], [254, 194], [293, 257]
 ])
 robot_positions = np.array([
-    # [-35, -190], [-50, -130], [-55, -163], [-37, -188], [-15, -179], 
-    # [0, -179], [-58, -126], [-47, -178], [-28, -154], [-38, -200],
-    # [-100, -133], [29, -133]
     [-51, -160], [-55, -188], [-47, -180], [-41, -201], [-67, -173], 
     [-60, -160], [-43, -179], [-34, -198], [-48, -200], [-63, -172]
 ])
@@ -186,13 +180,16 @@ def color_detect(frame):
     # 색상 별 마스크 영역
     mask_green = cv2.inRange(frame, (60,75,80), (100,255,255))      # green
     mask_green = np.repeat(mask_green[:,:,np.newaxis],3,-1)
+    
     mask_red1 = cv2.inRange(frame, (0,100,100), (10,255,255))     # red
     mask_red2 = cv2.inRange(frame, (170,100,100), (180,255,255))
     mask_red1 = np.repeat(mask_red1[:,:,np.newaxis],3,-1)
     mask_red2 = np.repeat(mask_red2[:,:,np.newaxis],3,-1)
     mask_red = cv2.bitwise_or(mask_red1, mask_red2)
+    
     mask_yellow = cv2.inRange(frame, (10,100,80), (30,255,255))     # yellow
     mask_yellow = np.repeat(mask_yellow[:,:,np.newaxis],3,-1)
+    
     mask_purple = cv2.inRange(frame, (130,85,51), (150,255,255))     # purple
     mask_purple = np.repeat(mask_purple[:,:,np.newaxis],3,-1)
 
@@ -242,8 +239,15 @@ def color_detect(frame):
         # 바이너리로 반환
     return frame,color
 
+def mask_resize_black(hsv_image, top_left = (89,136), bottom_right = (421,460)):
+    masked_hsv=np.zeros((hsv_image.shape[0], hsv_image.shape[1], 3), dtype = np.uint8)
+    hsv_image_crop=hsv_image[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]]
+    masked_hsv[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]]=hsv_image_crop
+    
+    return masked_hsv
+
 # 카메라 및 초기 설정
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 # gripper 설정
 open_gripper(mc)
@@ -254,9 +258,9 @@ close_gripper(mc)
 # 이동 완료 플래그
 completed = False
 
-block_count_in_location_A=0
-block_count_in_location_B=0
-block_count_in_location_C=0
+block_count_in_location_green=0
+block_count_in_location_red=0
+block_count_in_location_purple=0
 
 # 메인 동작 반복
 '''
@@ -268,7 +272,6 @@ LOOP
 
 while not completed:
         
-    
     # 원점 이동
     move_origin(mc)
     
@@ -277,7 +280,9 @@ while not completed:
     
     #블록 촬영 후 화면 상의 박스 중심 좌표 계산
     ret, frame = cap.read()
-    frame_hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    frame_hsv_black=mask_resize_black(frame)
+    frame_hsv = cv2.cvtColor(frame_hsv_black, cv2.COLOR_BGR2HSV)
+  
     masked, color = color_detect(frame_hsv)
     median = cv2.medianBlur(masked, 15)
     contours, _ = cv2.findContours(median, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -296,12 +301,10 @@ while not completed:
 
     if box_center:
         print(f'BOX의 중심좌표값 : {box_center}')
-        cv2.circle(frame, box_center, 5, (255, 0, 0), -1)
-        cv2.imwrite("./frame/frame"+f"{block_count_in_location_A+block_count_in_location_B+block_count_in_location_C}"+".jpg" ,frame)
+        cv2.circle(frame_hsv_black, box_center, 5, (255, 0, 0), -1)
+        cv2.imwrite("./frame/frame"+f"{block_count_in_location_green+block_count_in_location_red+block_count_in_location_purple}"+".jpg" ,frame_hsv_black)
         print('저장완료')
-        cv2.imwrite('./masked/masked'+f"{block_count_in_location_A+block_count_in_location_B+block_count_in_location_C}"+".jpg", median)
-        
-
+        cv2.imwrite('./masked/masked'+f"{block_count_in_location_green+block_count_in_location_red+block_count_in_location_purple}"+".jpg", median)
         
     #원활한 이동을 위해 원점으로 재이동
     move_origin(mc)
@@ -329,24 +332,22 @@ while not completed:
     
     if color=='Green':
         move_center_green(mc)
-        move_sort_location_A(mc, block_count_in_location_A)
-        block_count_in_location_A+=1
-        print(f"{block_count_in_location_A} location_A에 대한 값: {mc.get_coords()}")
+        move_sort_location_green(mc, block_count_in_location_green)
+        block_count_in_location_green+=1
+        print(f"{block_count_in_location_green} location_green에 대한 값: {mc.get_coords()}")
         
     elif color=='Red':           
-        move_sort_location_B(mc, block_count_in_location_B)
-        block_count_in_location_B+=1
-        print(f"{block_count_in_location_B} location_B에 대한 값: {mc.get_coords()}")
+        move_sort_location_red(mc, block_count_in_location_red)
+        block_count_in_location_red+=1
+        print(f"{block_count_in_location_red} location_red에 대한 값: {mc.get_coords()}")
         
     elif color=='Purple':
-        move_sort_location_C(mc, block_count_in_location_C)
-        block_count_in_location_C+=1
-        print(f"{block_count_in_location_C} location_C에 대한 값: {mc.get_coords()}")
+        move_sort_location_purple(mc, block_count_in_location_purple)
+        block_count_in_location_purple+=1
+        print(f"{block_count_in_location_purple} location_purple에 대한 값: {mc.get_coords()}")
         
     elif color=='Yellow':
         move_trash(mc)
-    
-
     
     # 그리퍼 열음
     open_gripper(mc)
@@ -360,10 +361,8 @@ while not completed:
     
     # 그리퍼 닫음
     close_gripper(mc)
-            
-
-       
-    if block_count_in_location_A==3 and block_count_in_location_B==3 and block_count_in_location_C==3:
+        
+    if block_count_in_location_green==3 and block_count_in_location_red==3 and block_count_in_location_purple==3:
         # 작업 완료 표시
         completed = True
         print('모든 지점에 블럭 쌓기 완료')
