@@ -1,0 +1,10 @@
+# Default initial positions for my_4dof_arm's ros2_control fake system
+
+initial_positions:
+  Revolute 2: 0
+  Revolute 27: 0
+  Revolute 31: 0
+  Revolute 6: 0
+  Revolute 7: 0
+  Revolute 8: 0
+  Revolute 9: 0
